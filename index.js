@@ -20,9 +20,10 @@ app.listen(port, () => {
 
 // Connect with MongoDB
 
-const { MongoClient, ServerApiVersion } = require('mongodb');
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const { get } = require('express/lib/response');
-const uri = `mongodb+srv://emajohndb1:9VzHM3vvneGfS5N@cluster0.zg2ow.mongodb.net/myFirstDatabase?retryWrites=true&w=majority`;
+console.log(process.env.DB_USER)
+const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.zg2ow.mongodb.net/myFirstDatabase?retryWrites=true&w=majority`;
 const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true, serverApi: ServerApiVersion.v1 });
 async function run() {
     try {
@@ -30,7 +31,7 @@ async function run() {
         const productCollection = client.db('emajohn').collection('product');
 
         app.get('/product', async (req, res) => {
-            console.log('query', req.query);
+            // console.log('query', req.query);
             const page = parseInt(req.query.page);
             const size = parseInt(req.query.size);
             const query = {};
@@ -53,6 +54,18 @@ async function run() {
             res.send({ count });
         })
 
+        // Use post to get products by ids
+        app.post('/productbykeys', async (req, res) => {
+            const keys = req.body;
+            const ids = keys.map(id => ObjectId(id));
+            console.log(ids)
+            const query = { _id: { $in: ids } };
+            const cursor = productCollection.find(query);
+            const products = await cursor.toArray();
+            res.send(products);
+            // console.log('query', keys);
+
+        })
     }
     finally {
 
